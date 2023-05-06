@@ -1,0 +1,9 @@
+.env
+config.json
+.venv*
+__pycache__/
+*.zip
+.DS_Store
+.coverage
+htmlcov
+local_messages_db.json
