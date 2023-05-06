@@ -14,9 +14,11 @@ Basic Echobot example, repeats messages.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-
 import logging
 import os
+import sys
+
+import hupper
 
 from telegram import __version__ as TG_VER
 
@@ -66,7 +68,7 @@ async def newchat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     """Send a message when the command /newchat is issued."""
     clear_messages(user_id=update.message.from_user.id)
     logger.info(f"New chat for user {update.message.from_user.id}")
-    await update.message.reply_text("New Chat!")
+    await update.message.reply_text("Let's do New Chat!")
 
 
 async def askup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -116,5 +118,13 @@ def main() -> None:
     application.run_polling()
 
 
+def start_reloader():
+    reloader = hupper.start_reloader('askup.main', verbose=True)
+    sys.exit(reloader.wait_for_exit())
+
+
 if __name__ == "__main__":
-    main()
+    if 'reload' in sys.argv:
+        start_reloader()
+    else:
+        main()

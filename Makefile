@@ -14,7 +14,7 @@ $(VENV)/bin/activate: requirements.txt
 init: $(VENV)/bin/activate
 
 askup: init
-	$(PYTHON) askup.py
+	$(PYTHON) askup.py reload
 
 clean:
 	rm -rf __pycache__

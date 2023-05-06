@@ -5,7 +5,7 @@ import openai
 CHATGPT_ENGINE = os.getenv("CHATGPT_ENGINE", "gpt-3.5-turbo")
 BOT_PENCIL_ICON = os.getenv("BOT_PENCIL_ICON", "*")
 
-UPDATE_CHAR_RATE = 3
+UPDATE_CHAR_RATE = 7
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
