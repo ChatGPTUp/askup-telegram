@@ -14,30 +14,21 @@ Basic Echobot example, repeats messages.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
+import json
 import logging
 import os
 import sys
 
 import hupper
+from gpt_util import chatgpt_callback_response, chatgpt_response
+from messages_db import clear_messages, get_messages, put_message
+from plugin import fetch_and_parse_json, ask_plugin_stage1, get_api_json_result, ask_plugin_stage2
+from telegram import Bot, ForceReply, Update
+from telegram.constants import ParseMode
+from telegram.ext import (Application, CommandHandler, ContextTypes,
+                          MessageHandler, filters)
 
-from telegram import __version__ as TG_VER
-
-try:
-    from telegram import __version_info__
-except ImportError:
-    __version_info__ = (0, 0, 0, 0, 0)  # type: ignore[assignment]
-
-if __version_info__ < (20, 0, 0, "alpha", 1):
-    raise RuntimeError(
-        f"This example is not compatible with your current PTB version {TG_VER}. To view the "
-        f"{TG_VER} version of this example, "
-        f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
-    )
-from telegram import ForceReply, Update
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
-
-from gpt_util import chatgpt_callback_response
-from messages_db import get_messages, put_message, clear_messages
+from prompts import MAIN_PROMPT
 
 TOKEN = os.environ['TOKEN']
 
@@ -71,6 +62,46 @@ async def newchat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text("Let's do New Chat!")
 
 
+async def askup_plugin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """ AskUp Main """
+
+    msg = await update.message.reply_text('...')
+
+    user = update.message.from_user
+    user_id = user.id
+    first_name = user.first_name
+    query = update.message.text
+
+    name, api_host, prompt = fetch_and_parse_json()
+    api_call_info = await ask_plugin_stage1(q=query, prompt=prompt,
+                                            call_back_func=context.bot.edit_message_text,
+                                            call_back_args={"chat_id": update.message.chat_id,
+                                                            "message_id": msg.message_id})
+    await context.bot.edit_message_text(chat_id=update.message.chat_id,
+                                        message_id=msg.message_id,
+                                        text=api_call_info,
+                                        parse_mode=ParseMode.MARKDOWN,
+                                        )
+    api_json_result = get_api_json_result(api_host, api_call_info)
+    msg = await update.message.reply_text(str(api_json_result)[:500])
+
+    msg = await update.message.reply_text("...")
+
+    final_response = await ask_plugin_stage2(q=query,  api_json_result=api_json_result,
+                                             call_back_func=context.bot.edit_message_text,
+                                             call_back_args={"chat_id": update.message.chat_id,
+                                                             "message_id": msg.message_id})
+    await context.bot.edit_message_text(chat_id=update.message.chat_id,
+                                        message_id=msg.message_id,
+                                        text=final_response,
+                                        parse_mode=ParseMode.MARKDOWN)
+
+    # Update DB
+    # put_message(user_id=user_id, message=new_message)
+    put_message(user_id=user_id, message={
+                'role': 'assistant', 'content': final_response})
+
+
 async def askup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ AskUp Main """
 
@@ -92,7 +123,9 @@ async def askup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await context.bot.edit_message_text(chat_id=update.message.chat_id,
                                         message_id=msg.message_id,
-                                        text=response)
+                                        text=response,
+                                        parse_mode=ParseMode.MARKDOWN,
+                                        )
 
     # Update DB
     put_message(user_id=user_id, message=new_message)
@@ -100,7 +133,41 @@ async def askup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 'role': 'assistant', 'content': response})
 
 
-def main() -> None:
+async def askup_03_stream(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    msg = await update.message.reply_text('...')
+
+    messages = [
+        {'role': 'system', 'content': MAIN_PROMPT},
+        {'role': 'user', 'content': update.message.text},
+    ]
+
+    response = await chatgpt_callback_response(messages=messages,
+                                               call_back_func=context.bot.edit_message_text,
+                                               call_back_args={"chat_id": update.message.chat_id,
+                                                               "message_id": msg.message_id})
+
+    await context.bot.edit_message_text(chat_id=update.message.chat_id,
+                                        message_id=msg.message_id,
+                                        text=response,
+                                        parse_mode=ParseMode.MARKDOWN,
+                                        )
+
+
+async def askup_02_simple(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    messages = [
+        {'role': 'system', 'content': MAIN_PROMPT},
+        {'role': 'user', 'content': update.message.text},
+    ]
+
+    gpt_response = chatgpt_response(messages=messages)
+    await update.message.reply_text(gpt_response)
+
+
+async def askup_01_echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(update.message.textt)
+
+
+def main_hanlder(event=None, context=None) -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(TOKEN).build()
@@ -112,14 +179,14 @@ def main() -> None:
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND, askup))
+        filters.TEXT & ~filters.COMMAND, askup_03_stream))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
 
 def start_reloader():
-    reloader = hupper.start_reloader('askup.main', verbose=True)
+    reloader = hupper.start_reloader('askup.main_hanlder', verbose=True)
     sys.exit(reloader.wait_for_exit())
 
 
@@ -127,4 +194,5 @@ if __name__ == "__main__":
     if 'reload' in sys.argv:
         start_reloader()
     else:
-        main()
+        # Run the async main function
+        main_hanlder()

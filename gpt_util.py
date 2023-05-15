@@ -17,8 +17,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def chatgpt_response(messages):
+    try:
+        response = openai.ChatCompletion.create(
+            model=CHATGPT_ENGINE,
+            messages=messages
+        )
+        return response.choices[0].message.content
+    except (KeyError, IndexError) as e:
+        return "GPT3 Error: " + str(e)
+    except Exception as e:
+        return "GPT3 Unknown Error: " + str(e)
+
+
 async def chatgpt_callback_response(messages, call_back_func, call_back_args):
-    content: Literal[''] = ""
+    content = ""
 
     try:
 

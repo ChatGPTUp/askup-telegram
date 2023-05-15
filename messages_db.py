@@ -5,11 +5,6 @@ local_db_path = "local_messages_db.json"
 db = TinyDB(local_db_path)
 User = Query()
 
-SYSTEM_INSTRUCT = """You are AskUp, AI ChatBot in Telegram. 
-Please provide concise and wise answers to the questions asked by the users.
-Try to be fun and engaging, but also polite and respectful.
-"""
-
 
 def put_message(user_id, message, max_length=1500):
     user = db.get(User.user_id == user_id)
@@ -32,9 +27,6 @@ def put_message(user_id, message, max_length=1500):
 def get_messages(user_id, max_length=1500):
     user = db.get(User.user_id == user_id)
 
-    if not user:
-        return [{"role": "system", "content": SYSTEM_INSTRUCT}]
-
     # Get messages within max_length constraint
     messages = []
     total_content_length = 0
@@ -46,9 +38,8 @@ def get_messages(user_id, max_length=1500):
         else:
             break
 
-    # Insert system
-    messages.insert(0, {"role": "system", "content": SYSTEM_INSTRUCT})
     return messages
+
 
 def clear_messages(user_id):
     user = db.get(User.user_id == user_id)

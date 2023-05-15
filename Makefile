@@ -16,6 +16,9 @@ init: $(VENV)/bin/activate
 askup: init
 	$(PYTHON) askup.py reload
 
+plugin: init
+	$(PYTHON) plugin.py
+
 clean:
 	rm -rf __pycache__
 	rm -rf $(VENV)
