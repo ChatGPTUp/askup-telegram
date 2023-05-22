@@ -11,6 +11,8 @@ Please generate query in the asked language.
 For exmple, if asked in Korean, please generate query in Korean.
 Please do not provide any explnation, just provide the API path with query parameters stricktly in this json format:
 {'path': api_path, 'query': query}
+
+If the query is not relevant to the plugin, please provide the best answer you can think of using previous context if any.
 """
 
 PLUGIN_RESULT_PROMPT = """For the given user question, we have called the API and get search results in json format.

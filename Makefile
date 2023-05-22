@@ -13,7 +13,7 @@ $(VENV)/bin/activate: requirements.txt
 
 init: $(VENV)/bin/activate
 
-askup: init
+app: init
 	$(PYTHON) askup.py reload
 
 plugin: init
