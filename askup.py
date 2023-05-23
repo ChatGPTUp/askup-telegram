@@ -290,7 +290,7 @@ async def askup_01_echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     """
     AskUp echo
     """
-    await update.message.reply_text(update.message.textt)
+    await update.message.reply_text(update.message.text)
 
 
 def main_hanlder(event=None, context=None) -> None:
