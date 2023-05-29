@@ -89,7 +89,7 @@ async def ask_plugin_stage1(
 
 
 async def ask_plugin_stage2(
-    query, api_json_result, call_back_func, call_back_args, memory=[]
+    query, api_json_result, call_back_func=None, call_back_args=None, memory=[]
 ):
     messages = (
         [{"role": "system", "content": PLUGIN_RESULT_PROMPT}]
@@ -116,7 +116,7 @@ async def ask_plugin(q):
     api_host, api_call_info = await ask_plugin_stage1(q, prompt)
     api_json_result = get_api_json_result(api_host, api_call_info)
 
-    final_response = await ask_plugin_stage1(q, api_json_result)
+    final_response = await ask_plugin_stage2(q, api_json_result, None, None)
     return final_response
 
 

@@ -305,7 +305,7 @@ def main_hanlder(event=None, context=None) -> None:
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, askup_02_plugin_memory)
+        MessageHandler(filters.TEXT & ~filters.COMMAND, askup_04_memory)
     )
 
     # Run the bot until the user presses Ctrl-C
