@@ -39,7 +39,7 @@ from telegram.ext import (
     filters,
 )
 
-TOKEN = os.environ["TOKEN"]
+BOT_TOKEN = os.environ["BOT_TOKEN"]
 
 # Enable logging
 logging.basicConfig(
@@ -296,7 +296,7 @@ async def askup_01_echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 def main_hanlder(event=None, context=None) -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(TOKEN).build()
+    application = Application.builder().token(BOT_TOKEN).build()
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
